@@ -79,7 +79,6 @@ const App: React.FC = () => {
             {calendarDays.map((day, idx) => {
               const holiday = day.holiday;
               const isFullHoliday = holiday && !holiday.isHalfDay;
-              const isHalfDay = holiday && holiday.isHalfDay;
               const shiftInfo = SHIFT_DETAILS[day.shift];
               const isOff = day.shift === ShiftType.OFF;
               
@@ -157,8 +156,10 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <footer className="text-center mt-8 px-4">
-        <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">2026 Vardiya Sistemi</p>
+      <footer className="text-center mt-8 px-4 pb-4">
+        <p className="text-[7.5px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+          Bu vardiya takvimi, Seyit Mehmet Eskici’nin çalışma saatleri esas alınarak hazırlanmıştır.
+        </p>
       </footer>
     </div>
   );
