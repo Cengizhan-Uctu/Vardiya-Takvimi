@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -13,6 +13,9 @@ import { generateCalendarDays } from './utils/dateUtils';
 
 const App: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date().getFullYear() === 2026 ? new Date().getMonth() : 0);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  
   const startShift = ShiftType.MORNING;
   const year = 2026;
 
@@ -26,6 +29,32 @@ const App: React.FC = () => {
 
   const handleNextMonth = () => {
     setCurrentMonth(prev => (prev < 11 ? prev + 1 : 0));
+  };
+
+  // Swipe İşlemleri
+  const minSwipeDistance = 50;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchEndX.current = null;
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      handleNextMonth();
+    } else if (isRightSwipe) {
+      handlePrevMonth();
+    }
   };
 
   return (
@@ -44,15 +73,21 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-2 pt-4">
+      <main 
+        className="max-w-3xl mx-auto px-2 pt-4"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <div className="flex items-center justify-between mb-4 px-2">
           <button 
             onClick={handlePrevMonth}
             className="p-3 bg-white shadow-sm border border-slate-200 rounded-2xl text-slate-400 active:bg-slate-50 active:scale-95 transition-all"
+            aria-label="Önceki Ay"
           >
             <ChevronLeft size={24} />
           </button>
-          <div className="text-center">
+          <div className="text-center select-none">
             <h2 className="text-xl font-black text-slate-800 uppercase tracking-tighter leading-none">
               {MONTHS[currentMonth]}
             </h2>
@@ -61,12 +96,13 @@ const App: React.FC = () => {
           <button 
             onClick={handleNextMonth}
             className="p-3 bg-white shadow-sm border border-slate-200 rounded-2xl text-slate-400 active:bg-slate-50 active:scale-95 transition-all"
+            aria-label="Sonraki Ay"
           >
             <ChevronRight size={24} />
           </button>
         </div>
 
-        <div className="bg-slate-200/50 rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden p-1.5">
+        <div className="bg-slate-200/50 rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden p-1.5 select-none">
           <div className="grid grid-cols-7 mb-1.5">
             {DAYS_SHORT.map(day => (
               <div key={day} className={`py-3 text-center text-[9px] font-black uppercase tracking-widest ${day === 'Paz' ? 'text-rose-500' : 'text-slate-500'}`}>
@@ -82,7 +118,6 @@ const App: React.FC = () => {
               const shiftInfo = SHIFT_DETAILS[day.shift];
               const isOff = day.shift === ShiftType.OFF;
               
-              // Haftaya göre arka plan (Haftalık kutucuk renklendirme)
               const weekNum = getISOWeek(day.date);
               const weekBgClass = weekNum % 2 === 0 ? 'bg-slate-50/50' : 'bg-transparent';
               
